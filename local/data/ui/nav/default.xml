@@ -1,0 +1,10 @@
+<nav search_view="search">
+  <view name="git_manager" default='true' />
+  <collection label="Search">
+    <view name="search"/>
+    <view name="datasets" />
+    <view name="reports" />
+    <view name="alerts" />
+    <view name="dashboards" />
+  </collection>
+</nav>

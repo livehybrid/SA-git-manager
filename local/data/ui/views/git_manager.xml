@@ -1,0 +1,134 @@
+<form script="tokenlinks.js">
+  <init>
+    <set token="ShowStartup"></set>
+  </init>
+  <label>Git Manager</label>
+  <fieldset submitButton="false">
+    <input type="dropdown" token="gitversion">
+      <label>Version</label>
+      <fieldForLabel>name</fieldForLabel>
+      <fieldForValue>tag</fieldForValue>
+      <search>
+        <query> |gitversions | streamstats count| search type!=Tag OR count<=5
+          |eval name = type+" - "+tag+" - "+date</query>
+        <earliest>-24h@h</earliest>
+        <latest>now</latest>
+      </search>
+    </input>
+  </fieldset>
+  <row depends="$NeverShow$">
+    <panel depends="$NeverShow$">
+      <input depends="$NeverShow$" type="link" token="SelectedCommand">
+        <label></label>
+        <choice value="pullapps">Git Pull</choice>
+        <choice value="rest">Reload Deploy</choice>
+        <change>
+          <unset token="ShowPullapps"></unset>
+          <unset token="ShowRest"></unset>
+          <unset token="ShowStartup"></unset>
+          <set token="form.DevResetView">$value$</set>
+        </change>
+      </input>
+      <input depends="$NeverShow$" type="text" token="DevRefreshResetView">
+        <label>DEV: Refresh Reset View</label>
+        <change>
+          <condition value="pullapps">
+            <set token="ShowPullapps"></set>
+            <set token="ShowPullappsView"></set>
+          </condition>
+          <condition value="rest">
+            <set token="ShowRest"></set>
+            <set token="ShowRestView"></set>
+          </condition>
+          <condition value="Refresh">
+            <set token="form.DevResetView">$tempTok$</set>
+            <set token="form.DevRefreshResetView">$tempTok$</set>
+          </condition>
+          <condition>
+            <set token="tempTok">$form.DevResetView$</set>
+            <set token="form.DevResetView"></set>
+            <set token="form.DevShowView"></set>
+            <eval token="form.DevRefreshShowView">now()</eval>
+          </condition>
+        </change>
+      </input>
+      <input depends="$NeverShow$" type="text" token="DevRefreshShowView">
+        <label>DEV: Refresh Show View</label>
+        <default></default>
+        <change>
+          <set token="form.DevRefreshResetView">Refresh</set>
+        </change>
+      </input>
+      <input depends="$NeverShow$" type="text" token="DevResetView">
+        <label>DEV: Reset View</label>
+        <default></default>
+        <change>
+          <unset token="ShowPullapps"></unset>
+          <unset token="ShowPullappsView"></unset>
+          <unset token="ShowRest"></unset>
+          <unset token="ShowRestView"></unset>
+          <set token="form.DevShowView">$form.SelectedCommand$</set>
+        </change>
+      </input>
+      <input depends="$NeverShow$" type="text" token="DevShowView">
+        <label>DEV: Show View</label>
+        <default></default>
+        <change>
+          <condition value="pullapps">
+            <set token="ShowPullapps"></set>
+            <set token="ShowPullappsView"></set>
+          </condition>
+          <condition value="rest">
+            <set token="ShowRest"></set>
+            <set token="ShowRestView"></set>
+            <unset token="ShowStartup"></unset>
+          </condition>
+        </change>
+      </input>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <html depends="$ShowStartup$">
+        <button class="btn" data-set-token="form.SelectedCommand" data-value="pullapps">Git Pull</button>
+        <button class="btn" data-set-token="form.SelectedCommand" data-value="rest">Reload Deploy</button>
+      </html>
+      <html depends="$ShowPullappsView$">
+        <button class="btn" data-set-token="form.DevRefreshResetView" data-value="">Refresh Git Pull</button>
+        <button class="btn" data-set-token="form.SelectedCommand" data-value="rest">Reload Deploy</button>
+      </html>
+      <html depends="$ShowRestView$">
+        <button class="btn" data-set-token="form.SelectedCommand" data-value="pullapps">Git Pull</button>
+        <button class="btn" data-set-token="form.DevRefreshResetView" data-value="">Refresh Reload Deploy</button>
+      </html>
+      <html depends="$ShowPullappsView$">
+        <h1>
+          Pullapps
+        </h1>
+      </html>
+      <table depends="$ShowPullappsView$">
+        <search>
+          <query>| pullapps $gitversion$  $ShowPullapps$</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="count">10</option>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </table>
+      <html depends="$ShowRestView$">
+        <h1>
+          Rest
+        </h1>
+      </html>
+      <table depends="$ShowRestView$">
+        <search>
+          <query>|rest /servicesNS/-/system/deployment/server/config/_reload $ShowRest$</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="drilldown">none</option>
+      </table>
+    </panel>
+  </row>
+</form>
